@@ -53,6 +53,11 @@ class UpdateIcon:
 
         self.menu.show_all()
 
+        # We'll reload our icon every 60 seconds
+        GObject.timeout_add (60 * 1000, self.refresh)
+
+        self.reported = False
+
 
         try:
             Notify.init('update-icon')
@@ -72,9 +77,9 @@ class UpdateIcon:
         
     def refresh(self, wid=None):
         ''' Refresh possible updates '''
-        self.icon.set_from_icon_name("reload")
-
         GObject.idle_add(self._reload)
+
+        return True
 
     def _reload(self):
         result = self.client.get_updates(PackageKit.FilterEnum.NONE, None, self.progress, None)
@@ -95,8 +100,10 @@ class UpdateIcon:
             update_str = _("There is a new security update") if security == 1 else \
                          _("There are %d security updates available") % security
             self.icon.set_tooltip_text(update_str)
-            notif = Notify.Notification.new(_('Security update'), update_str, 'software-update-urgent')
-            notif.show()
+            if not self.reported:
+                notif = Notify.Notification.new(_('Security update'), update_str, 'software-update-urgent')
+                notif.show()
+                self.reported = True
         else:
             if updates >= 1:
                 self.icon.set_from_icon_name("software-update-available")
@@ -106,8 +113,10 @@ class UpdateIcon:
                 update_str = _("There is a new software update") if security == 1 else \
                              _("There are %d software updates available") % updates
                 self.icon.set_tooltip_text(update_str)
-                notif = Notify.Notification.new(_('Software update'), update_str, 'software-update-available')
-                notif.show()
+                if not self.reported:
+                    notif = Notify.Notification.new(_('Software update'), update_str, 'software-update-available')
+                    notif.show()
+                    self.reported = True
             
             else:
                 self.icon.set_tooltip_text(_("All software is up to date"))
