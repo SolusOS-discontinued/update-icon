@@ -23,9 +23,10 @@
 #
 import gi.repository
 
-from gi.repository import Gtk, Notify
+from gi.repository import Gtk, GObject, Notify
 from gi.repository import PackageKitGlib as PackageKit
 import gettext
+import os
 
 gettext.install("update-icon", "/usr/share/locale")
 
@@ -38,23 +39,44 @@ class UpdateIcon:
         self.icon.set_from_icon_name("system-software-install")
         self.icon.set_title(_("Software Update"))
         self.icon.connect("popup-menu", self.popup)
+        self.icon.connect("activate", self.open_client)
         
         # our menu
         self.menu = Gtk.Menu()
+        reload = Gtk.MenuItem(_("Reload"))
+        reload.connect("activate", self.refresh)
+        self.menu.append(reload)
+        
         quit = Gtk.MenuItem(_("Quit"))
         quit.connect("activate", Gtk.main_quit)
         self.menu.append(quit)
 
         self.menu.show_all()
 
+
+        try:
+            Notify.init('update-icon')
+        except:
+            # Should probably log this
+            print "Notification daemon could not be reached"
+            
         self.client = PackageKit.Client()
         self.refresh()
 
     def popup(self, source, button, time):
         self.menu.popup(None, None, Gtk.StatusIcon.position_menu, self.icon, button, time)
+
+    def open_client(self, widg, user=None):
+        cmd = "gpk-update-viewer &"
+        os.system(cmd)
         
     def refresh(self, wid=None):
         ''' Refresh possible updates '''
+        self.icon.set_from_icon_name("reload")
+
+        GObject.idle_add(self._reload)
+
+    def _reload(self):
         result = self.client.get_updates(PackageKit.FilterEnum.NONE, None, self.progress, None)
         security = 0
         packages = result.get_package_array()
@@ -66,14 +88,27 @@ class UpdateIcon:
             if package.get_info() == PackageKit.InfoEnum.SECURITY:
                 security += 1
         if security >= 1:
-            self.icon.set_tooltip_text(_("Security updates available"))
             self.icon.set_from_icon_name("software-update-urgent")
             self.icon.set_visible(True)
+
+            # Show notification
+            update_str = _("There is a new security update") if security == 1 else \
+                         _("There are %d security updates available") % security
+            self.icon.set_tooltip_text(update_str)
+            notif = Notify.Notification.new(_('Security update'), update_str, 'software-update-urgent')
+            notif.show()
         else:
             if updates >= 1:
-                self.icon.set_tooltip_text(_("Software updates available"))
                 self.icon.set_from_icon_name("software-update-available")
                 self.icon.set_visible(True)
+
+                # Show notification
+                update_str = _("There is a new software update") if security == 1 else \
+                             _("There are %d software updates available") % updates
+                self.icon.set_tooltip_text(update_str)
+                notif = Notify.Notification.new(_('Software update'), update_str, 'software-update-available')
+                notif.show()
+            
             else:
                 self.icon.set_tooltip_text(_("All software is up to date"))
                 self.icon.set_visible(False)
@@ -81,7 +116,7 @@ class UpdateIcon:
                 self.icon.hide()   
 
     def progress(self, progress, type, user_data=None):
-        print progress
+        pass
         
 if __name__ == "__main__":
     icon = UpdateIcon()
