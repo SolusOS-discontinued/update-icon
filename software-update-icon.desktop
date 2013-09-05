@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Software Update Monitor
+Comment=Notifications when new updates are available
+Icon=software-update-available
+Exec=software-update-icon
+Terminal=false
+Type=Application
+NotShowIn=KDE;
+X-GNOME-Autostart-enabled=true
