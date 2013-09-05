@@ -53,8 +53,8 @@ class UpdateIcon:
 
         self.menu.show_all()
 
-        # We'll reload our icon every 60 seconds
-        GObject.timeout_add (60 * 1000, self.refresh)
+        # We'll reload our icon every 3 minutes
+        GObject.timeout_add (3 * (60 * 1000), self.refresh)
 
         self.reported = False
 
