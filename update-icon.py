@@ -126,8 +126,6 @@ class UpdateIcon:
             else:
                 self.icon.set_tooltip_text(_("All software is up to date"))
                 self.icon.set_visible(False)
-                # Hide
-                self.icon.hide()   
 
     def progress(self, progress, type, user_data=None):
         pass
