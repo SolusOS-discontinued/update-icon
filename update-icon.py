@@ -72,8 +72,13 @@ class UpdateIcon:
         self.menu.popup(None, None, Gtk.StatusIcon.position_menu, self.icon, button, time)
 
     def open_client(self, widg, user=None):
-        cmd = "gpk-update-viewer &"
-        os.system(cmd)
+        self.icon.set_visible(False)
+        GObject.idle_add(self._open_client)
+
+    def _open_client(self):
+        os.system("gpk-update-viewer")
+        # Essentially blocked until we return from the process
+        self._reload()
         
     def refresh(self, wid=None):
         ''' Refresh possible updates '''
