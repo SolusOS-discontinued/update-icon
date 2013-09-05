@@ -110,7 +110,7 @@ class UpdateIcon:
                 self.icon.set_visible(True)
 
                 # Show notification
-                update_str = _("There is a new software update") if security == 1 else \
+                update_str = _("There is a new software update") if updates == 1 else \
                              _("There are %d software updates available") % updates
                 self.icon.set_tooltip_text(update_str)
                 if not self.reported:
@@ -130,5 +130,3 @@ class UpdateIcon:
 if __name__ == "__main__":
     icon = UpdateIcon()
     Gtk.main()
-
-
