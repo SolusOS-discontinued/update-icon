@@ -23,7 +23,8 @@
 #
 import gi.repository
 
-from gi.repository import Gtk
+from gi.repository import Gtk, Notify
+from gi.repository import PackageKitGlib as PackageKit
 import gettext
 
 gettext.install("update-icon", "/usr/share/locale")
@@ -37,7 +38,7 @@ class UpdateIcon:
         self.icon.set_from_icon_name("system-software-install")
         self.icon.set_title(_("Software Update"))
         self.icon.connect("popup-menu", self.popup)
-
+        
         # our menu
         self.menu = Gtk.Menu()
         quit = Gtk.MenuItem(_("Quit"))
@@ -46,10 +47,42 @@ class UpdateIcon:
 
         self.menu.show_all()
 
+        self.client = PackageKit.Client()
+        self.refresh()
+
     def popup(self, source, button, time):
         self.menu.popup(None, None, Gtk.StatusIcon.position_menu, self.icon, button, time)
         
+    def refresh(self, wid=None):
+        ''' Refresh possible updates '''
+        result = self.client.get_updates(PackageKit.FilterEnum.NONE, None, self.progress, None)
+        security = 0
+        packages = result.get_package_array()
+        updates = len(packages)
+        for package in packages:
+            name = package.get_name()
+            print name
+            version = package.get_version()
+            if package.get_info() == PackageKit.InfoEnum.SECURITY:
+                security += 1
+        if security >= 1:
+            self.icon.set_tooltip_text(_("Security updates available"))
+            self.icon.set_from_icon_name("software-update-urgent")
+            self.icon.set_visible(True)
+        else:
+            if updates >= 1:
+                self.icon.set_tooltip_text(_("Software updates available"))
+                self.icon.set_from_icon_name("software-update-available")
+                self.icon.set_visible(True)
+            else:
+                self.icon.set_tooltip_text(_("All software is up to date"))
+                self.icon.set_visible(False)
+                # Hide
+                self.icon.hide()   
 
+    def progress(self, progress, type, user_data=None):
+        print progress
+        
 if __name__ == "__main__":
     icon = UpdateIcon()
     Gtk.main()
