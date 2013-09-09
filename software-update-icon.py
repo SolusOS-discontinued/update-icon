@@ -100,7 +100,6 @@ class UpdateIcon:
         updates = len(packages)
         for package in packages:
             name = package.get_name()
-            print name
             version = package.get_version()
             if package.get_info() == PackageKit.InfoEnum.SECURITY:
                 security += 1
