@@ -27,6 +27,7 @@ from gi.repository import Gtk, GObject, Notify
 from gi.repository import PackageKitGlib as PackageKit
 import gettext
 import os
+import sys
 
 gettext.install("update-icon", "/usr/share/locale")
 
@@ -34,6 +35,12 @@ gettext.install("update-icon", "/usr/share/locale")
 class UpdateIcon:
 
     def __init__(self):
+        # Bail if we're in a live session
+        with open("/proc/cmdline", "r") as cmdline:
+            lines = " ".join(cmdline.readlines())
+            if "live" in lines:
+                sys.exit(0)
+                
         # in future we must support appindicators so that we're not X dependent
         self.icon = Gtk.StatusIcon()
         self.icon.set_from_icon_name("system-software-install")
